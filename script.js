@@ -45,41 +45,103 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// Navbar Scroll Effect
+// Navbar Scroll Effect and Active Navigation Links (combined scroll handler)
 let lastScroll = 0;
 const navbar = document.querySelector('.navbar');
+let scrollTimeout;
 
 window.addEventListener('scroll', () => {
-    const currentScroll = window.pageYOffset;
-    
-    if (currentScroll > 100) {
-        navbar.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.1)';
-    } else {
-        navbar.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
+    // Throttle scroll events for better performance
+    if (scrollTimeout) {
+        clearTimeout(scrollTimeout);
     }
     
-    lastScroll = currentScroll;
+    scrollTimeout = setTimeout(() => {
+        const currentScroll = window.pageYOffset;
+        
+        // Update navbar shadow
+        if (currentScroll > 100) {
+            navbar.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.1)';
+        } else {
+            navbar.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
+        }
+        
+        // Update active navigation link
+        let current = '';
+        const sections = document.querySelectorAll('section');
+        
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.clientHeight;
+            if (pageYOffset >= (sectionTop - 100)) {
+                current = section.getAttribute('id');
+            }
+        });
+        
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${current}`) {
+                link.classList.add('active');
+            }
+        });
+        
+        lastScroll = currentScroll;
+    }, 10);
 });
 
 // Form Submission Handler
 const contactForm = document.getElementById('contactForm');
 
+// Create and add success message element
+const successMessage = document.createElement('div');
+successMessage.style.cssText = `
+    display: none;
+    padding: 15px;
+    margin-top: 15px;
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    border-radius: 8px;
+    text-align: center;
+`;
+contactForm.appendChild(successMessage);
+
 contactForm.addEventListener('submit', (e) => {
     e.preventDefault();
     
-    const name = document.getElementById('name').value;
-    const email = document.getElementById('email').value;
-    const message = document.getElementById('message').value;
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const message = document.getElementById('message').value.trim();
     
     // Simple validation
     if (name && email && message) {
         // Show success message
-        alert(`Thank you, ${name}! Your message has been received. We'll get back to you at ${email} soon.`);
+        successMessage.textContent = `Thank you, ${name}! Your message has been received. We'll get back to you at ${email} soon.`;
+        successMessage.style.display = 'block';
         
         // Reset form
         contactForm.reset();
+        
+        // Hide success message after 5 seconds
+        setTimeout(() => {
+            successMessage.style.display = 'none';
+        }, 5000);
     } else {
-        alert('Please fill in all fields.');
+        // Show inline error message
+        successMessage.style.backgroundColor = '#f8d7da';
+        successMessage.style.color = '#721c24';
+        successMessage.style.borderColor = '#f5c6cb';
+        successMessage.textContent = 'Please fill in all fields.';
+        successMessage.style.display = 'block';
+        
+        // Hide error message after 3 seconds
+        setTimeout(() => {
+            successMessage.style.display = 'none';
+            // Reset colors for next use
+            successMessage.style.backgroundColor = '#d4edda';
+            successMessage.style.color = '#155724';
+            successMessage.style.borderColor = '#c3e6cb';
+        }, 3000);
     }
 });
 
@@ -106,23 +168,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Active Navigation Link on Scroll
-window.addEventListener('scroll', () => {
-    let current = '';
-    const sections = document.querySelectorAll('section');
-    
-    sections.forEach(section => {
-        const sectionTop = section.offsetTop;
-        const sectionHeight = section.clientHeight;
-        if (pageYOffset >= (sectionTop - 100)) {
-            current = section.getAttribute('id');
-        }
-    });
-    
-    navLinks.forEach(link => {
-        link.classList.remove('active');
-        if (link.getAttribute('href') === `#${current}`) {
-            link.classList.add('active');
-        }
-    });
-});
+// Active Navigation Link is now handled in the combined scroll handler above
