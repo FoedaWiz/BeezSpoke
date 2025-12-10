@@ -45,48 +45,49 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// Navbar Scroll Effect and Active Navigation Links (combined scroll handler)
+// Navbar Scroll Effect and Active Navigation Links (optimized scroll handler)
 let lastScroll = 0;
 const navbar = document.querySelector('.navbar');
-let scrollTimeout;
+let isScrolling = false;
 
 window.addEventListener('scroll', () => {
-    // Throttle scroll events for better performance
-    if (scrollTimeout) {
-        clearTimeout(scrollTimeout);
+    // Use requestAnimationFrame for better performance
+    if (!isScrolling) {
+        window.requestAnimationFrame(() => {
+            const currentScroll = window.pageYOffset;
+            
+            // Update navbar shadow
+            if (currentScroll > 100) {
+                navbar.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.1)';
+            } else {
+                navbar.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
+            }
+            
+            // Update active navigation link
+            let current = '';
+            const sections = document.querySelectorAll('section');
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= (sectionTop - 100)) {
+                    current = section.getAttribute('id');
+                }
+            });
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${current}`) {
+                    link.classList.add('active');
+                }
+            });
+            
+            lastScroll = currentScroll;
+            isScrolling = false;
+        });
+        
+        isScrolling = true;
     }
-    
-    scrollTimeout = setTimeout(() => {
-        const currentScroll = window.pageYOffset;
-        
-        // Update navbar shadow
-        if (currentScroll > 100) {
-            navbar.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.1)';
-        } else {
-            navbar.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
-        }
-        
-        // Update active navigation link
-        let current = '';
-        const sections = document.querySelectorAll('section');
-        
-        sections.forEach(section => {
-            const sectionTop = section.offsetTop;
-            const sectionHeight = section.clientHeight;
-            if (pageYOffset >= (sectionTop - 100)) {
-                current = section.getAttribute('id');
-            }
-        });
-        
-        navLinks.forEach(link => {
-            link.classList.remove('active');
-            if (link.getAttribute('href') === `#${current}`) {
-                link.classList.add('active');
-            }
-        });
-        
-        lastScroll = currentScroll;
-    }, 10);
 });
 
 // Form Submission Handler
@@ -115,8 +116,12 @@ contactForm.addEventListener('submit', (e) => {
     
     // Simple validation
     if (name && email && message) {
+        // Sanitize user input to prevent XSS
+        const safeName = name.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const safeEmail = email.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        
         // Show success message
-        successMessage.textContent = `Thank you, ${name}! Your message has been received. We'll get back to you at ${email} soon.`;
+        successMessage.textContent = `Thank you, ${safeName}! Your message has been received. We'll get back to you at ${safeEmail} soon.`;
         successMessage.style.display = 'block';
         
         // Reset form
@@ -168,4 +173,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Active Navigation Link is now handled in the combined scroll handler above
+// Active Navigation Link is now handled in the optimized scroll handler above
